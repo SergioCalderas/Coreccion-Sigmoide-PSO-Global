@@ -14,7 +14,6 @@ def calcularEntropia(imagen):
 def aplicarSigmoide(imagenOriginal, alpha, delta):
     imagenGrises = imagenOriginal.convert("L")  # Convertir a escala de grises
     datos = np.asarray(imagenGrises) / 255.0    # Convertir la imagen a un array y normalizar de 0 a 1
-
     sigmoide = 1 / (1 + np.exp(-alpha * (delta -  datos)))  # Aplicar la funcion sigmoide
     imagen_transformada = np.uint8(sigmoide * 255) # Reescalar los pixeles de 0 a 255
     return imagen_transformada
@@ -29,9 +28,9 @@ def calcularAptitud(imagenOriginal, variables):
 
 #############################################################################################################################################################
 # CARGAR LA IMAGEN ORIGINAL
-ruta_imagen = "C:\\Users\\S ALBERT FC\\Documents\\ESCOM\\6° semestre\\Topicos Selectos\\personas.jpg"
+ruta_imagen = "C:\\Users\\S ALBERT FC\\Documents\\ESCOM\\6° semestre\\Topicos Selectos\\Correccion de Imagenes\\kodim23.png"
 imagenOriginal = Image.open(ruta_imagen)
-print("La Entropia de la Imagen Original es:", round(calcularEntropia(imagenOriginal), 4))
+print("La Entropia de la Imagen Original es:", round(calcularEntropia(imagenOriginal), 9))
 
 #############################################################################################################################################################
 # PARAMETROS PARA LA FUNCION DEL ALGORITMO PSO GLOBAL
@@ -40,7 +39,7 @@ ls = [10, 1]
 w = 0.5
 c1 = 2
 c2 = 2
-maxIteracion = 4
+maxIteracion = 50
 numParticulas = 150
 
 #############################################################################################################################################################
@@ -48,7 +47,7 @@ numParticulas = 150
 cumuloIncial = [] 
 for i in range(numParticulas):
     arregloX = []  # Arreglo para guardar los valores de las variables
-    arregloV = []  # Arreglo para guardar los valores de V
+    arregloV = []  # Arreglo para guardar los valores de
     for j in range(2):
         rand = random.random()
         x = round(li[j] + (rand) * (ls[j] - li[j]), 2)
@@ -76,18 +75,30 @@ for i in range(numParticulas):
     xpBEST.append(cumuloIncial[i][0])
 
 #############################################################################################################################################################
-# CICLO PRINCIPAL DEL ALGORITMO PSO CON ENFOQUE GLOBAL
+# Inicializar el mejor valor global de aptitud y la mejor posición global
+mejorAptitudGlobal = float('inf')
 xgBEST = []
+
+# CICLO PRINCIPAL DEL ALGORITMO PSO CON ENFOQUE GLOBAL
 for iteracion in range(maxIteracion):
     aptitudes = [individuo[2] for individuo in cumulo]
-    particulaMenorAptitud = aptitudes.index(max(aptitudes))
+    particulaMenorAptitud = aptitudes.index(min(aptitudes))
     minimaAptitud = cumulo[particulaMenorAptitud][2]
-    print("La Generacion Actual es:", iteracion, ", Mejor valor actual:", cumulo[particulaMenorAptitud])
+    print("La Iteracion Actual es:", iteracion,", Alpha:", cumulo[particulaMenorAptitud][0][0],", Delta:", cumulo[particulaMenorAptitud][0][1], ", Entropia:",
+          cumulo[particulaMenorAptitud][2])
+
     #####################################################################################################################################################
     # DETERMINAR xgBEST
     aptitudes = [particula[2] for particula in cumulo]  # Obtener las aptitudes del cumulo
-    particulaMenorAptitud = aptitudes.index(min(aptitudes))  # Obtener el indice del individuo con la menor aptitud
-    xgBEST = cumulo[particulaMenorAptitud][0]
+    particulaMenorAptitud = aptitudes.index(min(aptitudes))  # Obtener el índice del individuo con la menor aptitud
+    aptitudActual = cumulo[particulaMenorAptitud][2]
+    
+    # Actualizar xgBEST solo si la aptitud de la iteracion actual es mejor que la mejor aptitud del xgBest
+    if aptitudActual < mejorAptitudGlobal:
+        # print("  Valor Anterior de xgBEST:", xgBEST, "aptitud anterior:", aptitudActual) # Mostrar xgBest anterior
+        mejorAptitudGlobal = aptitudActual
+        xgBEST = cumulo[particulaMenorAptitud][0]
+        # print("  Nuevo mejor global encontrado:", xgBEST, "con aptitud:", mejorAptitudGlobal) # Mostrar el nuevo xgBest
 
     #####################################################################################################################################################
     # ACTUALIZAR LA VELOCIDAD Y POSICION DE LAS PARTICULAS
@@ -98,7 +109,7 @@ for iteracion in range(maxIteracion):
         for j in range(2):
             r1 = random.random()
             r2 = random.random()
-            nuevaV = round(w * cumulo[i][1][j] + c1*r1*(xpBEST[i][j] - cumulo[i][0][j]) + c2*r2*(xgBEST[j] -  cumulo[i][0][j]), 2)
+            nuevaV = round(w * cumulo[i][1][j] + c1 * r1 * (xpBEST[i][j] - cumulo[i][0][j]) + c2 * r2 * (xgBEST[j] - cumulo[i][0][j]), 2)
             nuevaX = round(cumulo[i][0][j] + nuevaV, 2)
             nuevoArregloX.append(nuevaX)
             nuevoArregloV.append(nuevaV)
@@ -132,16 +143,14 @@ for iteracion in range(maxIteracion):
     for i in range(numParticulas):
         if cumuloFinal[i][2] < cumulo[i][2]:  # Si el valor de la nueva aptitud es mejor que el que se tenia
             xpBEST[i] = cumuloFinal[i][0]
+    
     # Actualiza el cumulo con el cumuloFinal
     cumulo = cumuloFinal
 
 #############################################################################################################################################################
-# Mostrar el resultado final despues de todas las iteraciones
+# MOSTRAR EL RESULTADO FINAL DE TODAS LAS ITERACIONES
 aptitudes = [particula[2] for particula in cumulo]
 menorAptitud = aptitudes.index(min(aptitudes))
 minimaAptitud = cumulo[menorAptitud][2]
 print("\nLa Mejor Particula es:", cumulo[menorAptitud])
-print("Su aptitud es:", - minimaAptitud) # Se cambia el signo para que el valor de salida de la entropia sea positivo
-
-
-
+print("Su aptitud es:", - minimaAptitud)  # Se cambia el signo para que el valor de salida de la entropia sea positivo
